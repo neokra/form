@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Quick Survey</title>
+  <style>
+    :root {
+      --bg: #f1f3f4;
+      --card: #ffffff;
+      --text: #202124;
+      --muted: #5f6368;
+      --line: #dadce0;
+      --accent: #673ab7;
+      --accent-strong: #512da8;
+      --danger: #d93025;
+      --success: #188038;
+      --focus: #1a73e8;
+      font-family: Roboto, Arial, Helvetica, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    main {
+      width: 100%;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 24px 14px;
+    }
+
+    .form-card {
+      width: 100%;
+      max-width: 640px;
+      background: var(--card);
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(60, 64, 67, 0.16);
+      overflow: hidden;
+      animation: riseIn 420ms ease both;
+    }
+
+    .top-strip {
+      height: 10px;
+      background: var(--accent);
+    }
+
+    .content {
+      padding: 28px 22px 24px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 28px;
+      font-weight: 400;
+      letter-spacing: 0;
+    }
+
+    .description {
+      margin: 0 0 24px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .field-card {
+      border: 1px solid #e6e6e6;
+      border-radius: 8px;
+      padding: 20px 16px;
+      margin-bottom: 18px;
+      background: #fff;
+      transition: border-color 180ms ease, box-shadow 180ms ease;
+    }
+
+    .field-card:focus-within {
+      border-color: #c9dafc;
+      box-shadow: 0 1px 5px rgba(26, 115, 232, 0.16);
+    }
+
+    label {
+      display: block;
+      margin-bottom: 14px;
+      font-size: 16px;
+      line-height: 1.4;
+    }
+
+    .required {
+      color: var(--danger);
+    }
+
+    input {
+      width: 100%;
+      min-height: 46px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 10px 12px;
+      color: var(--text);
+      font: inherit;
+      outline: none;
+      transition: border-color 160ms ease, box-shadow 160ms ease;
+    }
+
+    input:focus {
+      border-color: var(--focus);
+      box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.12);
+    }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: 0;
+      border-radius: 6px;
+      min-height: 40px;
+      padding: 0 22px;
+      background: var(--accent);
+      color: #fff;
+      font: 500 14px Roboto, Arial, Helvetica, sans-serif;
+      cursor: pointer;
+      transition: background 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+    }
+
+    button:hover {
+      background: var(--accent-strong);
+      box-shadow: 0 2px 6px rgba(103, 58, 183, 0.28);
+      transform: translateY(-1px);
+    }
+
+    button:focus-visible {
+      outline: 3px solid rgba(26, 115, 232, 0.3);
+      outline-offset: 2px;
+    }
+
+    button:disabled {
+      background: #b8a7dd;
+      cursor: progress;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .status {
+      min-height: 20px;
+      flex: 1 1 220px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .status.error {
+      color: var(--danger);
+    }
+
+    .status.success {
+      color: var(--success);
+    }
+
+    @keyframes riseIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (min-width: 700px) {
+      main {
+        padding: 48px 20px;
+      }
+
+      .content {
+        padding: 34px 38px 30px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="form-card" aria-labelledby="survey-title">
+      <div class="top-strip"></div>
+      <div class="content">
+        <h1 id="survey-title">Quick Survey</h1>
+        <p class="description">Enter your email to continue.</p>
+
+        <form id="surveyForm">
+          <div class="field-card">
+            <label for="email">Email <span class="required">*</span></label>
+            <input id="email" name="email" type="email" autocomplete="email" inputmode="email" required placeholder="you@example.com">
+          </div>
+
+          <div class="actions">
+            <button id="submitButton" type="submit">Submit</button>
+            <div id="status" class="status" role="status" aria-live="polite"></div>
+          </div>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBDqLyABIUvBp1vN6UP2nXXoSb8Qg00IZA",
+      authDomain: "fun-project-a04fd.firebaseapp.com",
+      projectId: "fun-project-a04fd",
+      storageBucket: "fun-project-a04fd.firebasestorage.app",
+      messagingSenderId: "337537371852",
+      appId: "1:337537371852:web:304cc3f45ba3783b127c69"
+    };
+
+    const APP_LINK = "https://sharechat.com/post/60J0mlM";
+    const FALLBACK_DELAY_MS = 2500;
+    const FALLBACK_REDIRECT_MS = 2000;
+    const HIGH_CONFIDENCE_LIMIT_MS = 2000;
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const form = document.querySelector("#surveyForm");
+    const emailInput = document.querySelector("#email");
+    const submitButton = document.querySelector("#submitButton");
+    const statusEl = document.querySelector("#status");
+
+    const setStatus = (message, type = "") => {
+      statusEl.textContent = message;
+      statusEl.className = `status ${type}`.trim();
+    };
+
+    const getDeviceInfo = () => ({
+      userAgent: navigator.userAgent,
+      platform: navigator.platform,
+      language: navigator.language,
+      screen: {
+        width: window.screen.width,
+        height: window.screen.height
+      }
+    });
+
+    const wait = (duration) => new Promise((resolve) => window.setTimeout(resolve, duration));
+
+    const runAppDetection = () => {
+      let appOpened = false;
+      let visibilityTriggered = false;
+      let pagehideTriggered = false;
+      const startTime = Date.now();
+
+      return new Promise((resolve) => {
+        const onVisibilityChange = () => {
+          if (document.hidden) {
+            appOpened = true;
+            visibilityTriggered = true;
+          }
+        };
+
+        const onPageHide = () => {
+          appOpened = true;
+          pagehideTriggered = true;
+        };
+
+        document.addEventListener("visibilitychange", onVisibilityChange);
+        window.addEventListener("pagehide", onPageHide);
+
+        window.setTimeout(() => {
+          if (!appOpened) {
+            window.location.href = APP_LINK;
+          }
+        }, FALLBACK_REDIRECT_MS);
+
+        window.setTimeout(() => {
+          document.removeEventListener("visibilitychange", onVisibilityChange);
+          window.removeEventListener("pagehide", onPageHide);
+
+          const timeSpent = Date.now() - startTime;
+          let confidence = "low";
+
+          if (appOpened && timeSpent < HIGH_CONFIDENCE_LIMIT_MS) confidence = "high";
+          else if (appOpened) confidence = "medium";
+
+          const installed = confidence === "high";
+
+          console.log({
+            appOpened,
+            timeSpent,
+            confidence
+          });
+
+          resolve({
+            installed,
+            appOpened,
+            timeSpent,
+            confidence,
+            visibilityTriggered,
+            pagehideTriggered,
+            duration: timeSpent
+          });
+        }, FALLBACK_DELAY_MS);
+
+        // Browser app-link detection is intentionally launched only after this submit gesture.
+        window.location.href = APP_LINK;
+      });
+    };
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+      }
+
+      const email = emailInput.value.trim();
+      submitButton.disabled = true;
+      setStatus("Checking app availability...");
+
+      try {
+        await wait(500);
+        const detection = await runAppDetection();
+        setStatus("Saving response...");
+
+        await addDoc(collection(db, "logs"), {
+          email,
+          installed: detection.installed,
+          timestamp: new Date().toISOString(),
+          device: getDeviceInfo(),
+          referrer: document.referrer || "",
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "",
+          detection: {
+            appOpened: detection.appOpened,
+            timeSpentMs: detection.timeSpent,
+            method: "visibilitychange+pagehide+timing",
+            confidence: detection.confidence,
+            appLink: APP_LINK
+          },
+          debug: {
+            visibilityTriggered: detection.visibilityTriggered,
+            pagehideTriggered: detection.pagehideTriggered,
+            duration: detection.duration
+          }
+        });
+
+        setStatus("Response saved. Thank you.", "success");
+        form.reset();
+      } catch (error) {
+        console.error(error);
+        setStatus("Could not save the response. Check Firebase config and rules.", "error");
+      } finally {
+        submitButton.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
